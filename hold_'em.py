@@ -12,11 +12,11 @@ def turn(starting_position):
     while round_boolean == True:
         while p < 6:
             while j < len(players):
-                if player.position == p:
-                    print("It's your turn!")
-                    print("")
+                if player.position == p and player.fold == False:
                     while player_response_boolean == True:
-                       player_response_boolean = player_response()
+                        print("")
+                        print("It's your turn!")
+                        player_response_boolean = player_response()
                 elif players[j].position == p and players[j].fold == False:
                     non_player_response(j)
                 j+=1
@@ -39,10 +39,9 @@ def turn(starting_position):
 def player_response():
     if player.ante < bet and player.fold == False:
         print('You can either CALL, RAISE, or FOLD')
-        response = input("")
     elif player.ante == bet and player.fold == False:
         print("You can either CHECK, RAISE, or FOLD")
-        response = input("")
+    response = input("")
     if response == "CALL":
         call_response()
         return False
@@ -57,6 +56,7 @@ def player_response():
         return False
     else:
         print('Command not recognized. Please try again.')
+        return True
 
 def check_response():
     if player.ante != bet:
@@ -72,7 +72,7 @@ def raise_response(response):
             print("You've raised " + response)
             break
         else:
-            print("Please enter a number higher than " + bet)
+            print("Please enter a number higher than", bet)
     
 def call_response():
     player.player_bet(bet)
@@ -192,15 +192,20 @@ def intialize():
             print('')
         
 def deal_card():
-    card = d.deck[r.randint(0,51)]
+    global deck
+    card = deck[r.randint(0,len(deck)-1)]
+    deck.remove(card)
     return card
 
 def preflop():
     global pot
     global bet
     global players
+    global deck
 
+    deck = d.deck
     print('PREFLOP')
+
 
     # Dealing cards to each player
 
@@ -252,6 +257,7 @@ def flop():
     while i < 3:
         print(community_cards[i].name)
         i+=1
+    print('')
     turn(0)
 
 def river1():
@@ -261,6 +267,7 @@ def river1():
     while i < 4:
         print(community_cards[i].name)
         i+=1
+    print('')
     turn(0)
 
 def river2():
@@ -270,60 +277,119 @@ def river2():
     while i < 5:
         print(community_cards[i].name)
         i+=1
+    print('')
     turn(0)
 
 def calculate_hand(card1,card2):
+
     global community_cards
     d = community_cards
     d.append(card1,card2)
-    equal_suits = True
-    i = 1
-    while i < 7:
-        if d[i].suit == d[i-1]:
-            i+=1
-        else:
-            equal_suits = False
+
+    pair = check_pair(d)
+    two_pair = check_pair(d)
+    three_of_a_kind = check_three_of_a_kind(d)
+    flush = check_flush(d)
+    straight = check_straight(d)[0]
+    straight_flush = check_straight_flush(d)
+    royale_flush = check_royale_flush(d)
 
 
+def check_flush(d):
+    flush_list = [0,0,0,0]
+    for card in d:
+        if card.suit == 's':
+            flush_list[0] += 1
+        elif card.suit == 'c':
+            flush_list[1] += 1
+        elif card.suit == 'd':
+            flush_list[2] += 1
+        elif card.suit == 'h':
+            flush_list[3] += 1
+    flush_list.sort()
+    if flush_list[0] > 4:
+        return True
+    else:
+        return False
 
-
-    straight = False
+def check_straight(d):
+    potentional_straight = False
     straight_list = []
 
-    for x in d:
-        x=2
+    for compare_card in d:
+        card = 2
+        for contrast_card in d:
+            if compare_card.value == contrast_card.value:
+                continue
+            elif compare_card.value - contrast_card.value == 1 or -1:
+                straight_list.append(contrast_card)
+                potentional_straight = True
 
-    # for x in d:
-    #     for y in d:
-    #         if x.value == y.value:
-    #             continue
-    #         elif x.value - y.value == 1:
-    #             straight_list.append(d[i-1],d[i])
-    #             straight = True
-    #             break
-    #         elif x.value - y.value == -1:
-    #             straight_list.append(d[i],d[i-1])
-    #             straight = True
-    #             break
+    if potentional_straight == True:
+        for compare_card in d:
+            if compare_card == straight_list[0] or compare_card == straight_list[len(straight_list)-1]:
+                continue
+            elif compare_card.value - straight_list[0].value == -1:
+                straight_list.insert(0,compare_card)
+            elif compare_card.value - straight_list[len(straight_list)-1] == 1:
+                straight_list.append(compare_card)
+    if len(straight_list) > 4:
+        straight_list.insert(0,True)
+    else:
+        straight_list.insert(0,False)
+    return straight_list
+    
+def check_pair(d):
+    pair_count = 0
+    for compare_card in d:
+        for contrast_card in d:
+            if compare_card == contrast_card:
+                continue
+            elif compare_card.value == contrast_card.value:
+                pair_count += 1
+                continue
+    if pair_count < 1:
+        return False
+    else:
+        return True
 
-    # if straight == True:
-    #     for x in d:
-    #         if x.value >
-    #         elif x.value - straight_list[0].value == -1:
-    #             straight_list.insert(0,d[i])
-    #         elif x.value - straight_list[len(straight_list)-1].value == 1:
-    #             straight_list.append(d[i])
-    # if len(straight_list) > 4:
-    #     straight = True
-    # else:
-    #     straight = False
+def check_two_pair(d):
+    pair_count = 0
+    for compare_card in d:
+        for contrast_card in d:
+            if compare_card == contrast_card:
+                continue
+            elif compare_card.value == contrast_card.value:
+                pair_count += 1
+                continue
+    if pair_count < 5:
+        return False
+    else:
+        return True          
 
-    # for x in d:
-    #     if x.value in d:
-    #         x=2
-                
+def check_three_of_a_kind(d):
+    for compare_card in d:
+        for contrast_card in d:
+            if compare_card == contrast_card:
+                continue
+            elif compare_card.value == contrast_card.value:
+                for contest_card in d:
+                    if contest_card == compare_card or contest_card == contrast_card:
+                        continue
+                    elif contest_card.value == compare_card.value:
+                        return True
+    return False
 
+def check_straight_flush(d):
+    if check_straight(d)[0] == True and check_flush(d) == True:
+        return True
+    else:
+        return False
 
+def check_royale_flush(d):
+    if check_straight_flush(d) == True:
+        if check_straight(d)[1].value == 10:
+            return True
 
 def showdown():
     global pot
@@ -331,20 +397,18 @@ def showdown():
     global players
 
     print("Show your cards!")
+    for player in players:
+        if player.fold == False:
+            print(player.name + "'s cards are the", player.card1.name, 'and the', player.card2.name)
     i=0
     winner = []
-    while i < 6:
-        players[i].show_cards()
-        card_totals = 0
-        if players[i].card1 + players[i].card2 > card_totals:
-            winner[0] = players[i]
-        elif players[i].card1 + players[i].card2 == card_totals:
-            winner.append(players[i])
-        i+=1
+
+        
 
     if len(winner) > 1:
         print("It's a tie! The winners are:")
-        print(winner)
+        for player in winner:
+            print(player)
     else:
         print("The winner is " + winner[0].name)
         winner[0].chips += pot
